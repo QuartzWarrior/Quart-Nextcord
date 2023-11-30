@@ -3,17 +3,17 @@ from abc import ABCMeta, abstractmethod
 
 
 class DiscordModelsMeta(ABCMeta):
-
     ROUTE = str()
 
     def __init__(cls, name, *args, **kwargs):
         if not cls.ROUTE and name != "DiscordModelsBase":
-            raise NotImplementedError(f"ROUTE must be specified in a Discord model: {name}.")
+            raise NotImplementedError(
+                f"ROUTE must be specified in a Discord model: {name}."
+            )
         super().__init__(name, *args, **kwargs)
 
 
 class DiscordModelsBase(metaclass=DiscordModelsMeta):
-
     BOT = False
     MANY = False
 

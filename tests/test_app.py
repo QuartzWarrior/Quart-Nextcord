@@ -7,7 +7,9 @@ from quart_discord import DiscordOAuth2Session, requires_authorization
 app = Quart(__name__)
 
 app.secret_key = b"%\xe0'\x01\xdeH\x8e\x85m|\xb3\xffCN\xc9g"
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"    # !! Only in development environment.
+os.environ[
+    "OAUTHLIB_INSECURE_TRANSPORT"
+] = "true"  # !! Only in development environment.
 
 app.config["DISCORD_CLIENT_ID"] = 490732332240863233
 app.config["DISCORD_CLIENT_SECRET"] = os.getenv("DISCORD_CLIENT_SECRET")
@@ -45,13 +47,18 @@ async def login():
 
 @app.route("/login-data/")
 async def login_with_data():
-    return await discord.create_session(data=dict(redirect="/me/", coupon="15off", number=15, zero=0, status=False))
+    return await discord.create_session(
+        data=dict(redirect="/me/", coupon="15off", number=15, zero=0, status=False)
+    )
 
 
 @app.route("/invite-bot/")
 async def invite_bot():
     return await discord.create_session(
-        scope=["bot"], permissions=8, guild_id=464488012328468480, disable_guild_select=True
+        scope=["bot"],
+        permissions=8,
+        guild_id=464488012328468480,
+        disable_guild_select=True,
     )
 
 
@@ -88,7 +95,9 @@ async def me():
 @app.route("/me/guilds/")
 async def user_guilds():
     guilds = await discord.fetch_guilds()
-    return "<br />".join([f"[ADMIN] {g.name}" if g.permissions.administrator else g.name for g in guilds])
+    return "<br />".join(
+        [f"[ADMIN] {g.name}" if g.permissions.administrator else g.name for g in guilds]
+    )
 
 
 @app.route("/add_to/<int:guild_id>/")

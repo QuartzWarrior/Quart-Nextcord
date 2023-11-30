@@ -1,5 +1,5 @@
 class Integration(object):
-    """"Class representing discord server integrations.
+    """ "Class representing discord server integrations.
 
     Attributes
     ----------

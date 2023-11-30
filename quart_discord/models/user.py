@@ -69,8 +69,8 @@ class User(DiscordModelsBase):
         self.premium_type = self._payload.get("premium_type")
 
         # Few properties which are intended to be cached.
-        self._guilds = None         # Mapping of guild ID to quart_discord.models.Guild(...).
-        self.connections = None     # List of quart_discord.models.UserConnection(...).
+        self._guilds = None  # Mapping of guild ID to quart_discord.models.Guild(...).
+        self.connections = None  # List of quart_discord.models.UserConnection(...).
 
     @property
     def guilds(self):
@@ -106,15 +106,21 @@ class User(DiscordModelsBase):
         """A property returning direct URL to user's avatar."""
         if not self.avatar_hash:
             return
-        image_format = configs.DISCORD_ANIMATED_IMAGE_FORMAT \
-            if self.is_avatar_animated else configs.DISCORD_IMAGE_FORMAT
+        image_format = (
+            configs.DISCORD_ANIMATED_IMAGE_FORMAT
+            if self.is_avatar_animated
+            else configs.DISCORD_IMAGE_FORMAT
+        )
         return configs.DISCORD_USER_AVATAR_BASE_URL.format(
-            user_id=self.id, avatar_hash=self.avatar_hash, format=image_format)
+            user_id=self.id, avatar_hash=self.avatar_hash, format=image_format
+        )
 
     @property
     def default_avatar_url(self):
         """A property which returns the default avatar URL as when user doesn't has any avatar set."""
-        return configs.DISCORD_DEFAULT_USER_AVATAR_BASE_URL.format(modulo5=int(self.discriminator) % 5)
+        return configs.DISCORD_DEFAULT_USER_AVATAR_BASE_URL.format(
+            modulo5=int(self.discriminator) % 5
+        )
 
     @property
     def is_avatar_animated(self):
@@ -176,7 +182,7 @@ class User(DiscordModelsBase):
         ----------
         guild_id : int
             The ID of the guild you want this user to be added.
-            
+
         Returns
         -------
         dict
@@ -189,10 +195,19 @@ class User(DiscordModelsBase):
 
         """
         try:
-            data = {"access_token": (await current_app.discord.get_authorization_token())["access_token"]}
+            data = {
+                "access_token": (await current_app.discord.get_authorization_token())[
+                    "access_token"
+                ]
+            }
         except KeyError:
             raise exceptions.Unauthorized
-        return await self._bot_request(f"/guilds/{guild_id}/members/{self.id}", method="PUT", json=data) or dict()
+        return (
+            await self._bot_request(
+                f"/guilds/{guild_id}/members/{self.id}", method="PUT", json=data
+            )
+            or dict()
+        )
 
     async def fetch_guilds(self) -> list:
         """A method which makes an API call to Discord to get user's guilds. It prepares the internal guilds cache
@@ -204,7 +219,9 @@ class User(DiscordModelsBase):
             List of :py:class:`quart_discord.Guilds` instances.
 
         """
-        self._guilds = {guild.id: guild for guild in await Guild.fetch_from_api(cache=False)}
+        self._guilds = {
+            guild.id: guild for guild in await Guild.fetch_from_api(cache=False)
+        }
         return self.guilds
 
     async def fetch_connections(self) -> list:
@@ -223,4 +240,5 @@ class User(DiscordModelsBase):
 
 class Bot(User):
     """Class representing the client user itself."""
+
     # TODO: What is this?

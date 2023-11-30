@@ -1,7 +1,7 @@
 from .base import DiscordModelsBase
 from quart import current_app
 
-import discord
+import nextcord
 from .. import configs
 
 
@@ -47,7 +47,7 @@ class Guild(DiscordModelsBase):
     def __get_permissions(permissions_value):
         if permissions_value is None:
             return
-        return discord.Permissions(int(permissions_value))
+        return nextcord.Permissions(int(permissions_value))
 
     def __str__(self):
         return self.name
@@ -63,7 +63,9 @@ class Guild(DiscordModelsBase):
         """A property returning direct URL to the guild's icon. Returns None if guild has no icon set."""
         if not self.icon_hash:
             return
-        return configs.DISCORD_GUILD_ICON_BASE_URL.format(guild_id=self.id, icon_hash=self.icon_hash)
+        return configs.DISCORD_GUILD_ICON_BASE_URL.format(
+            guild_id=self.id, icon_hash=self.icon_hash
+        )
 
     @classmethod
     async def fetch_from_api(cls, cache=True):

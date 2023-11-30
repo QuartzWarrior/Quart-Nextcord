@@ -26,15 +26,30 @@ class DiscordOAuth2HttpClient(abc.ABC):
         "DISCORD_OAUTH2_TOKEN",
     ]
 
-    def __init__(self, app, client_id=None, client_secret=None, redirect_uri=None, bot_token=None, users_cache=None,
-                 locks_cache=None):
+    def __init__(
+        self,
+        app,
+        client_id=None,
+        client_secret=None,
+        redirect_uri=None,
+        bot_token=None,
+        users_cache=None,
+        locks_cache=None,
+    ):
         self.client_id = client_id or app.config["DISCORD_CLIENT_ID"]
         self.__client_secret = client_secret or app.config["DISCORD_CLIENT_SECRET"]
         self.redirect_uri = redirect_uri or app.config["DISCORD_REDIRECT_URI"]
         self.__bot_token = bot_token or app.config.get("DISCORD_BOT_TOKEN", str())
-        self.users_cache = cachetools.LFUCache(
-            app.config.get("DISCORD_USERS_CACHE_MAX_LIMIT", configs.DISCORD_USERS_CACHE_DEFAULT_MAX_LIMIT)
-        ) if users_cache is None else users_cache
+        self.users_cache = (
+            cachetools.LFUCache(
+                app.config.get(
+                    "DISCORD_USERS_CACHE_MAX_LIMIT",
+                    configs.DISCORD_USERS_CACHE_DEFAULT_MAX_LIMIT,
+                )
+            )
+            if users_cache is None
+            else users_cache
+        )
         self.locks_cache = locks_cache
         self.locksmith_lock = asyncio.Lock() if locks_cache is not None else None
         if not issubclass(self.users_cache.__class__, Mapping):
@@ -72,10 +87,12 @@ class DiscordOAuth2HttpClient(abc.ABC):
             return await discord.fetch_token(
                 configs.DISCORD_TOKEN_URL,
                 client_secret=self.__client_secret,
-                authorization_response=request.url
+                authorization_response=request.url,
             )
 
-    async def _make_session(self, token: str = None, state: str = None, scope: list = None) -> OAuth2Session:
+    async def _make_session(
+        self, token: str = None, state: str = None, scope: list = None
+    ) -> OAuth2Session:
         """A low level method used for creating OAuth2 session.
 
         Parameters
@@ -101,13 +118,16 @@ class DiscordOAuth2HttpClient(abc.ABC):
             scope=scope,
             redirect_uri=self.redirect_uri,
             auto_refresh_kwargs={
-                'client_id': self.client_id,
-                'client_secret': self.__client_secret,
+                "client_id": self.client_id,
+                "client_secret": self.__client_secret,
             },
             auto_refresh_url=configs.DISCORD_TOKEN_URL,
-            token_updater=self.save_authorization_token)
+            token_updater=self.save_authorization_token,
+        )
 
-    async def request(self, route: str, method="GET", data=None, oauth=True, **kwargs) -> typing.Union[dict, str]:
+    async def request(
+        self, route: str, method="GET", data=None, oauth=True, **kwargs
+    ) -> typing.Union[dict, str]:
         """Sends HTTP request to provided route or discord endpoint.
 
         Note
@@ -142,21 +162,25 @@ class DiscordOAuth2HttpClient(abc.ABC):
         route = configs.DISCORD_API_BASE_URL + route
         async with await self._make_session() as discord:
             async with (
-                    await discord.request(method, route, data, **kwargs)
-                    if oauth else aiohttp.request(method, route, data=data, **kwargs)
+                await discord.request(method, route, data, **kwargs)
+                if oauth
+                else aiohttp.request(method, route, data=data, **kwargs)
             ) as response:
-
                 if response.status == 401:
                     raise exceptions.Unauthorized
                 if response.status == 429:
-                    raise exceptions.RateLimited(await response.json(), response.headers)
+                    raise exceptions.RateLimited(
+                        await response.json(), response.headers
+                    )
 
                 try:
                     return await response.json()
                 except aiohttp.ContentTypeError:
                     return await response.text()
 
-    async def bot_request(self, route: str, method="GET", **kwargs) -> typing.Union[dict, str]:
+    async def bot_request(
+        self, route: str, method="GET", **kwargs
+    ) -> typing.Union[dict, str]:
         """Make HTTP request to specified endpoint with bot token as authorization headers.
 
         Parameters
@@ -181,4 +205,6 @@ class DiscordOAuth2HttpClient(abc.ABC):
 
         """
         headers = {"Authorization": f"Bot {self.__bot_token}"}
-        return await self.request(route, method=method, oauth=False, headers=headers, **kwargs)
+        return await self.request(
+            route, method=method, oauth=False, headers=headers, **kwargs
+        )

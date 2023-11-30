@@ -7,7 +7,6 @@ from quart import current_app
 
 
 class JSONBool(object):
-
     def __init__(self, value):
         self.value = bool(value)
 
@@ -33,6 +32,7 @@ def json_bool(value):
 
 
 # Decorators.
+
 
 def requires_authorization(view):
     """A decorator for quart views which raises exception :py:class:`quart_discord.Unauthorized` if the user

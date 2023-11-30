@@ -1,7 +1,7 @@
 import jwt
 import typing
 import asyncio
-import discord
+import nextcord
 
 from . import configs, _http, models, utils, exceptions
 
@@ -63,15 +63,24 @@ class DiscordOAuth2Session(_http.DiscordOAuth2HttpClient):
 
     async def fetch_lock(self):
         async with self.locksmith_lock:
-            lock = current_app.discord.locks_cache.get(session.get("DISCORD_OAUTH2_TOKEN")["access_token"])
+            lock = current_app.discord.locks_cache.get(
+                session.get("DISCORD_OAUTH2_TOKEN")["access_token"]
+            )
             if lock is None:
                 lock = asyncio.Lock()
-                current_app.discord.locks_cache.update({session.get("DISCORD_OAUTH2_TOKEN")["access_token"]: lock})
+                current_app.discord.locks_cache.update(
+                    {session.get("DISCORD_OAUTH2_TOKEN")["access_token"]: lock}
+                )
             return lock
 
     async def create_session(
-            self, scope: list = None, *, data: dict = None, prompt: bool = True,
-            permissions: typing.Union[discord.Permissions, int] = 0, **params
+        self,
+        scope: list = None,
+        *,
+        data: dict = None,
+        prompt: bool = True,
+        permissions: typing.Union[nextcord.Permissions, int] = 0,
+        **params,
     ):
         """Primary method used to create OAuth2 session and redirect users for
         authorization code grant.
@@ -100,10 +109,16 @@ class DiscordOAuth2Session(_http.DiscordOAuth2HttpClient):
             Quart redirect to discord authorization servers to complete authorization code grant process.
 
         """
-        scope = scope or request.args.get("scope", str()).split() or configs.DISCORD_OAUTH_DEFAULT_SCOPES
+        scope = (
+            scope
+            or request.args.get("scope", str()).split()
+            or configs.DISCORD_OAUTH_DEFAULT_SCOPES
+        )
 
         if not prompt and set(scope) & set(configs.DISCORD_PASSTHROUGH_SCOPES):
-            raise ValueError("You should use explicit OAuth grant for passthrough scopes like bot.")
+            raise ValueError(
+                "You should use explicit OAuth grant for passthrough scopes like bot."
+            )
 
         data = data or dict()
         data["__state_secret_"] = generate_token()
@@ -111,20 +126,26 @@ class DiscordOAuth2Session(_http.DiscordOAuth2HttpClient):
         state = jwt.encode(data, current_app.config["SECRET_KEY"], algorithm="HS256")
 
         async with await self._make_session(scope=scope, state=state) as discord_:
-            authorization_url, state = discord_.authorization_url(configs.DISCORD_AUTHORIZATION_BASE_URL)
+            authorization_url, state = discord_.authorization_url(
+                configs.DISCORD_AUTHORIZATION_BASE_URL
+            )
 
         self.__save_state(state)
 
         params = params or dict()
         params["prompt"] = "consent" if prompt else "none"
         if "bot" in scope:
-            if not isinstance(permissions, (discord.Permissions, int)):
-                raise ValueError(f"Passed permissions must be an int or discord.Permissions, not {type(permissions)}.")
-            if isinstance(permissions, discord.Permissions):
+            if not isinstance(permissions, (nextcord.Permissions, int)):
+                raise ValueError(
+                    f"Passed permissions must be an int or discord.Permissions, not {type(permissions)}."
+                )
+            if isinstance(permissions, nextcord.Permissions):
                 permissions = permissions.value
             params["permissions"] = permissions
             try:
-                params["disable_guild_select"] = utils.json_bool(params["disable_guild_select"])
+                params["disable_guild_select"] = utils.json_bool(
+                    params["disable_guild_select"]
+                )
             except KeyError:
                 pass
         authorization_url = add_params_to_uri(authorization_url, params)
@@ -235,7 +256,7 @@ class DiscordOAuth2Session(_http.DiscordOAuth2HttpClient):
         Parameters
         ----------
         use_cache : bool, optional
-            can be set to False to avoid using the cache.  
+            can be set to False to avoid using the cache.
 
         Returns
         -------

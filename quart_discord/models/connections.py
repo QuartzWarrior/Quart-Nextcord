@@ -49,7 +49,10 @@ class UserConnection(DiscordModelsBase):
         self.visibility = self._payload.get("visibility")
 
     def __get_integrations(self):
-        return [Integration(payload) for payload in self._payload.get("integrations", list())]
+        return [
+            Integration(payload)
+            for payload in self._payload.get("integrations", list())
+        ]
 
     @property
     def is_visible(self):
